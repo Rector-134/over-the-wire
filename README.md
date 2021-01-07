@@ -1,2 +1,3 @@
 # over-the-wire
-.org file dumps of Over the Wire wargames notes
+
+This repository is a collection of .org file dumps which I use as notes while war gaming Over The Wire.
