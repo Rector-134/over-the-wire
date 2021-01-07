@@ -1,0 +1,1 @@
+Bandit is baiscally a masochist's crash course in Linux commands and file structure, with extras to make it slightly more painful. That being said, there's nothing thrown at you that's not in the man pages.
