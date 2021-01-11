@@ -1,0 +1,289 @@
+#+TITLE: Krypton
+
+* Level 0->1
+** Python code used to decode base64 string:
+from pwn import b64d
+
+string = 'S1JZUFRPTklTR1JFQVQ=='
+
+password = b64d(string)
+
+print ("[+] Password for Krypton level 0 = ", password.decode("utf-8"))
+
+** Output:
+--> [+] Password for Krypton level 0 =  KRYPTONISGREAT
+
+* Level 1->2
+cd /krypton/krypton1
+cat krypton2
+
+** Python code used to decode shift cypher:
+string = 'YRIRY GJB CNFFJBEQ EBGGRA'
+
+CHARACTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+for key in range(len(CHARACTERS)):
+    decoded = ''
+
+    for character in string:
+        if character in CHARACTERS:
+            char_index = CHARACTERS.find(character)
+            decoded_index = (char_index - key)
+
+            if decoded_index < 0:
+                decoded_index = decoded_index +len(CHARACTERS)
+
+            decoded = decoded + CHARACTERS[decoded_index]
+
+        else:
+            decoded = decoded + character
+
+    print ("[+] Key #{}: {}".format(key, decoded))
+
+** Output:
+--> [+] Key #13: LEVEL TWO PASSWORD ROTTEN
+
+* Level 2->3:
+# this could be solved differently, but since we oversolved the last challenge there's really no need. Comment out the string in krypton1.py, and add the string from krypton3 in /krypton/krypton2.
+
+** Output:
+--> [+] Key #12: CAESARISEASY
+
+* Level 3->4:
+cd /krypton/krypton3
+ls -a
+# the hints pimp us for frequency analysis, so I guess let's do it their way for practice.
+
+** Python code used for frequnecy analysis:
+import string
+
+file = open('found1-3.txt')
+
+message = file.read()
+
+letter_freq = {}
+
+for char in string.ascii_uppercase:
+    letter_freq[char] = 0
+
+for letter in message:
+    if letter in string.ascii_uppercase:
+        letter_freq[letter] += 1
+
+frequency_table = [(key_frag, letter_freq[key_frag]) for key_frag in
+                   sorted(letter_freq, key = letter_freq.get, reverse = True)]
+
+ciphertext = 'KSVVWBGSJDSVSISVXBMNYQUUKBNWCUANMJS'
+english_freq = 'EATSORINHCLDUPMFWGYBKVXQJZ'
+cipher_freq = ''.join([(key_frag) for key_frag in sorted(letter_freq,
+                    key = letter_freq.get, reverse = True)])
+
+print ("[+] Ciphertext frequency order:", cipher_freq)
+print ("[+] Ciphertext:", ciphertext)
+
+plaintext = ''
+for letter in ciphertext:
+    index = cipher_freq.index(letter)
+    plaintext += english_freq[index]
+
+print ("[+] Decoded plaintext:", plaintext)
+
+file.close()
+
+** Output:
+--> [+] Decoded plaintext: WELLDONETHELEVELFOURPASSWORDISBRUTE
+
+* Level 4-5:
+cd /krypton/krypton4
+ls -a
+cat found1
+cat found1 | sed 's/ //g'
+# copy output into a .txt file
+
+** Python code used to determine key for Vigenere cipher:
+import string
+
+file = open('krypton4_cipher.txt')
+
+message = file.read()
+
+def parse(key_length, ciphertext):
+    result = []
+    for x in range(key_length):
+        temp_string = ''
+        for c in range(x, len(ciphertext), key_length):
+            temp_string += ciphertext[c]
+        result.append(temp_string)
+    return result
+
+def micro_caesar(ciphertext, shift):
+    charset = string.ascii_uppercase
+    decrypted = ""
+    for char in ciphertext:
+        if char in charset:
+            idx = charset.find(char)
+            idx += shift
+            if idx >= len(charset):
+                idx -= len(charset)
+            elif idx < 0:
+                idx += len(charset)
+            decrypted += charset[idx]
+        else:
+            decrypted = decrypted + char
+    return decrypted
+
+def frequency(text):
+    letter_freq = {}
+    for char in string.ascii_uppercase:
+        letter_freq[char] = 0
+    for letter in text:
+        if letter in string.ascii_uppercase:
+            letter_freq[letter] += 1
+
+    freq_table = [(key_frag, letter_freq[key_frag]) for key_frag in
+                  sorted(letter_freq, key = letter_freq.get, reverse = True)]
+    return freq_table
+
+charset = string.ascii_uppercase
+english_freq = 'ETAOINSHRDLUCMWFYGPBVKXJQZ'
+ciphertext = message
+key_length = 6
+
+data = parse(key_length, ciphertext)
+key = ''
+for line in data:
+    for shift in range(26):
+        t = micro_caesar(line, shift)
+        if frequency(t)[0][0] == 'E':
+            c = charset.find(line[0])
+            c -= charset.find(t[0])
+            c %= len(charset)
+            key += charset[c]
+
+print ("[+] The key is:", key)
+
+file.close()
+
+** Output:
+--> [+] The key is: FREKEY
+
+# manual decryption from this point was faster than programming a solution, HCIKVRJOX gives us the password CLEARTEXT
+
+* Level 5->6:
+cd /krypton/krypton5
+ls -a
+cat found1
+cat found1 | sed 's/ //g'
+# copy output into a .txt file
+
+** Python code used to crack the cipher.
+
+# this took incremental adjustment of the keylength, and it still provides an imperfect (albeit usable) output. Will tinker with this more in the future.
+
+import string
+
+#file = open('krypton4_cipher.txt')
+file = open('krypton5_cipher.txt')
+
+message = file.read()
+
+def parse(key_length, ciphertext):
+    result = []
+    for x in range(key_length):
+        temp_string = ''
+        for c in range(x, len(ciphertext), key_length):
+            temp_string += ciphertext[c]
+        result.append(temp_string)
+    return result
+
+def micro_caesar(ciphertext, shift):
+    charset = string.ascii_uppercase
+    decrypted = ""
+    for char in ciphertext:
+        if char in charset:
+            idx = charset.find(char)
+            idx += shift
+            if idx >= len(charset):
+                idx -= len(charset)
+            elif idx < 0:
+                idx += len(charset)
+            decrypted += charset[idx]
+        else:
+            decrypted = decrypted + char
+    return decrypted
+
+def frequency(text):
+    letter_freq = {}
+    for char in string.ascii_uppercase:
+        letter_freq[char] = 0
+    for letter in text:
+        if letter in string.ascii_uppercase:
+            letter_freq[letter] += 1
+
+    freq_table = [(key_frag, letter_freq[key_frag]) for key_frag in
+                  sorted(letter_freq, key = letter_freq.get, reverse = True)]
+    return freq_table
+
+charset = string.ascii_uppercase
+ciphertext = message
+key_length = 9
+
+data = parse(key_length, ciphertext)
+key = ''
+for line in data:
+    for shift in range(26):
+        t = micro_caesar(line, shift)
+        if frequency(t)[0][0] == 'E':
+            c = charset.find(line[0])
+            c -= charset.find(t[0])
+            c %= len(charset)
+            key += charset[c]
+
+print ("[+] The key is:", key)
+
+file.close()
+
+** Output:
+
+--> [+] The key is: XEYLENCTH
+# clearly this is only partially correct, as the pattern would allude to thusfar that everything is in plain English. Shifting X to K, and C to G, we have KEYLENGTH, which is much more likely
+
+# again pursuing a quick manual solution, this decodes BELOSZ to RANDOM
+
+* Level 6->7:
+cd /krypton/krypton6
+cat krypton7
+# this is our password we need to decrypt
+mkdir /tmp/bones
+python -c "print 'A'*100" > /tmp/bones/plain.txt
+./encrypt6 /tmp/bones/plain.txt /tmp/bones.cipher.txt
+ls /tmp/bones
+cat /tmp/bones/cipher.txt
+# output:
+EICTDGYIYZKTHNSIRFXYCPFUEOCKRNEICTDGYIYZKTHNSIRFXYCPFUEOCKRNEICTDGYIYZKTHNSIRFXYCPFUEOCKRNEICTDGYIYZ
+# this pattern appears to repeat every 30 characters, giving us a keylength of 30.
+python -c "print 'B'*100" > /tmp/bones/plain2.txt
+./encrypt6 /tmp/bones/plain2.txt /tmp/bones/cipher2.txt
+cat /tmp/bones/cipher2.txt
+# output:
+FJDUEHZJZALUIOTJSGYZDQGVFPDLSOFJDUEHZJZALUIOTJSGYZDQGVFPDLSOFJDUEHZJZALUIOTJSGYZDQGVFPDLSOFJDUEHZJZA
+# again, the keylength appears to be 30. Looking at the letters, it becomes apparent that they've each shifted by one additional position from our string of A's, which gives us enough information to try and crack this cipher.
+
+** Python code:
+encrypted_password = 'PNUKLYLWRQKGKBE'
+encrypted_plaintext = 'EICTDGYIYZKTHNSIRFXYCPFUEOCKRN'
+
+password = ''
+
+for i in range(len(encrypted_password)):
+    key = ord(encrypted_password[i]) - ord(encrypted_plaintext[i])
+    if key < 0:
+        key += 26
+    key += ord('A')
+
+    password += (chr(key))
+
+print ("[+] The password is:", password)
+
+** Output:
+--> [+] The password is: LFSRISNOTRANDOM
