@@ -1,0 +1,81 @@
+#+TITLE: Leviathan
+
+* Level 0->1:
+ls -a
+cd .backup
+ls -a
+cat bookmarks.html
+# too messy, let's comb through this...
+strings bookmarks.html | grep "leviathan"
+--> rioGegei8m
+
+* Level 1->2:
+ls -a
+./check
+# test with a string to monitor functionality
+ltrace ./check
+# test with a string again, and look for the strcmp() function that gives us "sex"
+./check
+# enter string "sex"
+whoami
+# now let's go find the actual password
+cat /etc/leviathan_pass/leviathan2
+--> ougahZi8Ta
+
+* Level 2->3:
+ls -a
+ltrace ./printfile '/etc/leviathan_pass/leviathan2'
+mkdir tmp/bones && touch tmp/bones/file\ trick.txt
+ln -s /etc/leviathan_pass/leviathan3 /tmp/bones/file
+~/printfile "file trick.txt"
+--> Ahdiemoo1j
+
+* Level 3->4:
+ls -a
+ltrace ./level3
+# hmm, strcmp isn't actually doing anything effectual here. Checking die.net, snlprintf isn't a function from any standard C library.
+./level3
+snlprintf
+whoami
+# almost there...
+cat /etc/leviathan_pass/leviathan4
+--> vuH0coox6m
+
+* Level 4->5:
+ls -al
+cd .trash
+ls -al
+./bin
+# hmmm binary. Convert it, and...
+--> Tith4cokei
+
+* Level 5->6:
+ls -al
+ltrace ./leviathan5
+# can't find the necessary file. Maybe we can trick it with a symbolic link to what we want?
+ln -s /etc/leviathan_pass/leviathan6 /tmp/file.log
+./leviathan5
+--> UgaoFee4li
+
+* Leviathan 6->7:
+ls -al
+ltrace ./leviathan6
+ltrace ./leviathan6 1234
+# see the atoi() function? Let's dig into that...
+gdb -q ./leviathan6
+disas main
+# look for the cmp after our suspicious atoi() function
+(gdb) b*main+84
+r 1234
+x/u $esp+0xc
+# gives us our four digit PIN of 7123
+# exit GDB
+./leviathan6 7123
+whoami
+cat /etc/leviathan_pass/leviathan7
+--> ahy7MaeBo9
+
+* Level 7->8:
+ls -al
+cat CONGRATULATIONS
+#micdrop
